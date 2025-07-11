@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">WhatsApp Image Popper</string>
+    <string name="search">search…</string>
+    <string name="search_by">Search By</string>
+    <string-array name="search_by_choices">
+        <item>Search By</item>
+        <item>Image Name</item>
+        <item>Endpoint</item>
+    </string-array>
+    <string name="menu_home">Home</string>
+    <string name="menu_profile">Profile</string>
+    <string name="menu_dashboard">Dashboard</string>
+    <string name="menu_add_image">Add Image</string>
+    <string name="no_login_msg">You are not logged in, please select an option given below.</string>
+    <string name="login_btn">Login</string>
+    <string name="signup_btn">Signup</string>
+    <string name="or_text">OR</string>
+    <string name="endpoint_input_rule">No uppercase &amp; special characters allowed!</string>
+
+    <string name="heading_signup"><b>Signup</b></string>
+    <string name="lbl_username">Username</string>
+    <string name="lbl_password">Password</string>
+    <string name="lbl_ep_name">Endpoint Name</string>
+    <string name="no_acc_signup">Don\'t have an account?</string>
+    <string name="have_acc_login">Already have an account?</string>
+
+    <string name="heading_login"><b>Login</b></string>
+
+    <!--    <string name="api_url">https://wipr.onrender.com</string>-->
+    <string name="api_url">http://192.168.1.41:8080</string>
+
+    <string name="your_profile"><b><u>User Profile</u></b></string>
+    <string name="save_text">Save</string>
+    <string name="edit_text">Edit</string>
+    <string name="logout_text">Logout</string>
+    <string name="delete_acc_text">Delete Account</string>
+    <string name="pls_wait">Please Wait…</string>
+
+    <string name="add_image"><u><b>Add Image</b></u></string>
+    <string name="image_name">Image Name (Identifier)</string>
+    <string name="image_url">Image URL</string>
+    <string name="add">Add</string>
+
+    <string name="your_posts"><b>Your Posts</b></string>
+    <string name="image_name2"><b>Image Name : </b>%1$s</string>
+    <string name="image_url2"><b>Image URL : </b>%1$s</string>
+
+    <string name="no_posts">No post yet on this account.</string>
+</resources>

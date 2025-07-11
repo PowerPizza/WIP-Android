@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="action_bar">#8ece54</color>
+    <color name="gray">#808080</color>
+    <color name="transparent">#00000000</color>
+    <color name="subheader_green">#90df90</color>
+    <color name="cardBG_green">#f0ffee</color>
+    <color name="dark_green">#008000</color>
+    <color name="shine_green">#05b41c</color>
+    <color name="very_light_green">#e3ffe9</color>
+    <color name="link_btn_color">#b6ffae</color>
+
+    <!-- MESSAGE BOX COLORS -->
+    <color name="msg_bg_red">#ffe6e6</color>
+    <color name="msg_bg_green">#ebffe6</color>
+    <color name="msg_bg_blue">#e6eaff</color>
+    <color name="msg_bg_orange">#ffeee6</color>
+
+    <color name="msg_fg_red">#de1818</color>
+    <color name="msg_fg_green">#03c200</color>
+    <color name="msg_fg_blue">#0051ff</color>
+    <color name="msg_fg_orange">#ff9500</color>
+
+    <!-- INPUT DESIGN COLORS -->
+    <color name="input_gray">#cecece</color>
+    <color name="input_green">#00bf33</color>
+    <color name="input_green2">#00ed3f</color>
+
+    <!-- BUTTON BACKGROUND COLORS-->
+    <color name="btn_orange">#f1a20e</color>
+    <color name="btn_red">#e74c3c</color>
+    <color name="btn_blue">#2ecc71 </color>
+
+    <color name="ele_green">#bcf9bc</color>
+    <color name="ele_active_green">#89d989</color>
+
+    <color name="loading_blue">#0f83ff</color>
+    <color name="loading_gray">#e3e3e3</color>
+</resources>

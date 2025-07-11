@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="2dp"
+    android:background="@drawable/border_round"
+    android:backgroundTint="@color/ele_green"
+    android:padding="4dp">
+
+    <ImageView
+        android:id="@+id/userele_img_view"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:background="@drawable/border_round"
+        android:src="@drawable/add_circle_icon"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <HorizontalScrollView
+        android:id="@+id/horizontalScrollView"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:padding="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/userele_delete_btn"
+        app:layout_constraintStart_toEndOf="@+id/userele_img_view"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/userele_img_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/image_name2"
+                android:textColor="@color/dark_green" />
+
+            <TextView
+                android:id="@+id/userele_img_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/image_url2"
+                android:textColor="@color/dark_green" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <ImageButton
+        android:id="@+id/userele_delete_btn"
+        android:layout_width="40dp"
+        android:layout_height="30dp"
+        android:background="@drawable/btn_red_bg"
+        android:padding="5dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/delete_icon"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
