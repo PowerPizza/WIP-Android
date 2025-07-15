@@ -26,8 +26,8 @@
 
     <string name="heading_login"><b>Login</b></string>
 
-    <!--    <string name="api_url">https://wipr.onrender.com</string>-->
-    <string name="api_url">http://192.168.1.41:8080</string>
+        <string name="api_url">https://wipr.onrender.com</string>
+<!--    <string name="api_url">http://192.168.1.41:8080</string>-->
 
     <string name="your_profile"><b><u>User Profile</u></b></string>
     <string name="save_text">Save</string>

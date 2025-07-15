@@ -1,10 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.Light">
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/action_bar</item>
     </style>
 
-    <style name="BottomNavBarTheme" parent="Theme.MaterialComponents.Light">
+    <style name="BottomNavBarTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
         <item name="colorPrimary">@color/dark_green</item>
     </style>
 </resources>

@@ -90,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
                 this.curNavigation = item.getItemId();
                 this.setAppFragment((Fragment) new AddImageFragment());
             }
-
             else if (item.getItemId() == R.id.navigation_dashboard) {
                 this.curNavigation = item.getItemId();
                 this.setAppFragment((Fragment) new DashboardFragment());
@@ -156,9 +155,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void changeBottomNavMenu(int menu_id) {
-        BottomNavigationView bottom_nav_bar = findViewById(R.id.bottom_nav_bar);
-        bottom_nav_bar.getMenu().clear();
-        bottom_nav_bar.inflateMenu(menu_id);
+        runOnUiThread(()->{
+            BottomNavigationView bottom_nav_bar = findViewById(R.id.bottom_nav_bar);
+            bottom_nav_bar.getMenu().clear();
+            bottom_nav_bar.inflateMenu(menu_id);
+        });
     }
 
     public void logout(){
