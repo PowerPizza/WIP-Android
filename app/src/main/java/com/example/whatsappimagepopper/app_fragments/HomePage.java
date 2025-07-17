@@ -16,11 +16,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.whatsappimagepopper.CustomArrayAdapter;
 import com.example.whatsappimagepopper.ImageCardEle;
 import com.example.whatsappimagepopper.R;
+import com.example.whatsappimagepopper.http_requests.HttpRequestMaker;
 import com.google.android.flexbox.FlexboxLayout;
 
 import org.json.JSONObject;
@@ -96,24 +98,12 @@ public class HomePage extends Fragment {
     void loadImagesByPage(int page) {
         card_holder.removeAllViews();
         this.toggleLoadingCircle(true);
-        OkHttpClient cli1 = new OkHttpClient();
-        RequestBody bd1 = RequestBody.create(String.format(Locale.ENGLISH, "{\"doc_no\": %d}", page), MediaType.get("text/plain; charset=utf-8"));
-        Request r = new Request.Builder().url(getString(R.string.api_url)+"/get_img_links").post(bd1).build();
-        cli1.newCall(r).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.d("SCIHACK", "HTTP_CALL_FAILED");
-                call.cancel();
-            }
 
+        new HttpRequestMaker(getString(R.string.api_url) + "/get_img_links") {
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                ResponseBody resp = response.body();
-                if (resp == null){
-                    return;
-                }
+            public void onResp(String data) {
                 try {
-                    JSONObject data_ = new JSONObject(resp.string());
+                    JSONObject data_ = new JSONObject(data);
                     JSONObject images_data = data_.getJSONArray("doc").getJSONObject(0);
                     setTotal_page(data_.getInt("total_docs")-1);
                     getActivity().runOnUiThread(()->{
@@ -143,12 +133,19 @@ public class HomePage extends Fragment {
                     Log.d("SCIHACK", "failed to load json :: "+e);
                 }
             }
-        });
+
+            @Override
+            public void onFail(IOException err) {
+                Toast.makeText(getContext(), "Error : "+err.toString(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCompletion() { }
+        }.postText(String.format(Locale.ENGLISH, "{\"doc_no\": %d}", page));
     }
 
     public void toggleLoadingCircle(boolean show){
         View loading_cir = this.this_fragment.findViewById(R.id.loading_circle);
         loading_cir.setVisibility(show ? View.VISIBLE : View.GONE);
-
     }
 }

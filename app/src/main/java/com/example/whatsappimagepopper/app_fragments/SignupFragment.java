@@ -22,9 +22,11 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.whatsappimagepopper.MainActivity;
 import com.example.whatsappimagepopper.R;
+import com.example.whatsappimagepopper.http_requests.HttpRequestMaker;
 import com.example.whatsappimagepopper.room_database.AppInfoDao;
 import com.example.whatsappimagepopper.room_database.AppInfoTable;
 import com.example.whatsappimagepopper.room_database.AppRoomDataBase;
@@ -92,30 +94,12 @@ public class SignupFragment extends Fragment {
                 }
             }
 
-            signup_.setText(getString(R.string.pls_wait));
-            signup_.setEnabled(false);
-            OkHttpClient http_cli = new OkHttpClient();
-            RequestBody to_send = RequestBody.create(String.format(Locale.ENGLISH, "{\"username\": \"%s\", \"password\": \"%s\", \"endpoint\": \"%s\"}", uname, password, end_point), MediaType.get("text/plain"));
-            Request r = new Request.Builder().url(getString(R.string.api_url)+"/signup/register").post(to_send).build();
-            http_cli.newCall(r).enqueue(new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    Log.d("SCIHACK", e.toString());
-                    call.cancel();
-                }
+            MainActivity.blockButtonAtUI(getActivity(), signup_);
 
+            new HttpRequestMaker(getString(R.string.api_url)+"/signup/register") {
                 @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    ResponseBody resp = response.body();
-                    if (resp == null){
-                        getActivity().runOnUiThread(()->{
-                            signup_.setText(R.string.signup_btn);
-                            signup_.setEnabled(true);
-                        });
-                        return;
-                    }
-                    String resp_text = resp.string();
-                    if (resp_text.compareTo("OK") == 0){
+                public void onResp(String data) {
+                    if (data.compareTo("OK") == 0){
                         Thread data_writer = new Thread(()->{
                             AppInfoDao app_info_cursor = app_info_db.appInfoDao();
                             app_info_cursor.clearTable();
@@ -128,6 +112,7 @@ public class SignupFragment extends Fragment {
                                 getActivity().runOnUiThread(()->{
                                     MainActivity.createMsgBox(this_fragment, "Account registered but failed to auto-login. Please try logging in manually.", "error");
                                 });
+                                return;
                             }
                             getActivity().runOnUiThread(()->{
                                 ((MainActivity) getActivity()).changeBottomNavMenu(R.menu.with_login_navbar);
@@ -136,12 +121,12 @@ public class SignupFragment extends Fragment {
                         });
                         data_writer.start();
                     }
-                    else if (resp_text.compareTo("USERNAME_ALREADY_EXISTS") == 0){
+                    else if (data.compareTo("USERNAME_ALREADY_EXISTS") == 0){
                         getActivity().runOnUiThread(()->{
                             MainActivity.createMsgBox(this_fragment, "Username already exists. Please choose a different one.", "error");
                         });
                     }
-                    else if (resp_text.compareTo("ENDPOINT_ALREADY_EXISTS") == 0){
+                    else if (data.compareTo("ENDPOINT_ALREADY_EXISTS") == 0){
                         getActivity().runOnUiThread(()->{
                             MainActivity.createMsgBox(this_fragment, "This endpoint is already taken. Please choose another endpoint.", "error");
                         });
@@ -151,12 +136,18 @@ public class SignupFragment extends Fragment {
                             MainActivity.createMsgBox(this_fragment, "Unexpected error while signing up!", "error");
                         });
                     }
-                    getActivity().runOnUiThread(()->{
-                        signup_.setText(R.string.signup_btn);
-                        signup_.setEnabled(true);
-                    });
                 }
-            });
+
+                @Override
+                public void onFail(IOException err) {
+                    Toast.makeText(getContext(), "Error : "+err.toString(), Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCompletion() {
+                    MainActivity.unblockButtonAtUI(getActivity(), signup_);
+                }
+            }.postText(String.format(Locale.ENGLISH, "{\"username\": \"%s\", \"password\": \"%s\", \"endpoint\": \"%s\"}", uname, password, end_point));
         });
         return this.this_fragment;
     }

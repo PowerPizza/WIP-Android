@@ -16,10 +16,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.whatsappimagepopper.MainActivity;
 import com.example.whatsappimagepopper.R;
+import com.example.whatsappimagepopper.http_requests.HttpRequestMaker;
 import com.example.whatsappimagepopper.room_database.AppInfoDao;
 import com.example.whatsappimagepopper.room_database.AppInfoTable;
 import com.example.whatsappimagepopper.room_database.AppRoomDataBase;
@@ -115,57 +117,39 @@ public class AddImageFragment extends Fragment {
             Log.d("SCIHACK", e.toString());
         }
 
-        this.blockButtonAtUI(this_fragment.findViewById(R.id.add_img_btn));
-        OkHttpClient cli =  new OkHttpClient();
-        RequestBody to_resp = RequestBody.create(to_send.toString(), MediaType.get("text/plain"));
-        Request req = new Request.Builder().url(getString(R.string.api_url)+"/api/put_img_link").post(to_resp).build();
-        cli.newCall(req).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                call.cancel();
-            }
+        MainActivity.blockButtonAtUI(getActivity(), this_fragment.findViewById(R.id.add_img_btn));
 
+        new HttpRequestMaker(getString(R.string.api_url)+"/api/put_img_link") {
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                ResponseBody rb = response.body();
-                if (rb == null){
-                    return;
-                }
+            public void onResp(String data) {
                 getActivity().runOnUiThread(()->{
-                    unblockButtonAtUI(this_fragment.findViewById(R.id.add_img_btn));
+                    MainActivity.unblockButtonAtUI(getActivity(), this_fragment.findViewById(R.id.add_img_btn));
                 });
 
-                String data_ = rb.string();
-                if (data_.compareTo("OK") == 0){
+                if (data.compareTo("OK") == 0){
                     getActivity().runOnUiThread(()->{
                         MainActivity.createMsgBox(this_fragment, "Image added successfully!", "success");
                     });
                 }
-                else if (data_.compareTo("FAILED") == 0){
+                else if (data.compareTo("FAILED") == 0){
                     getActivity().runOnUiThread(()->{
                         MainActivity.createMsgBox(this_fragment, "Failed to add image - Given image name already exists!", "error");
                     });
                 }
-                else if (data_.compareTo("OUT_OF_LIMIT") == 0) {
+                else if (data.compareTo("OUT_OF_LIMIT") == 0) {
                     getActivity().runOnUiThread(()->{
                         MainActivity.createMsgBox(this_fragment, "Failed to add image - You have reached max image uploads on this account.", "error");
                     });
                 }
             }
-        });
-    }
 
-    public void blockButtonAtUI(Button b){
-        getActivity().runOnUiThread(()->{
-            b.setTag(b.getText());
-            b.setText(getString(R.string.pls_wait));
-            b.setEnabled(false);
-        });
-    }
-    public void unblockButtonAtUI(Button b){
-        getActivity().runOnUiThread(()->{
-            b.setText(b.getTag().toString());
-            b.setEnabled(true);
-        });
+            @Override
+            public void onFail(IOException err) {
+                Toast.makeText(getContext(), "Error : "+err.toString(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCompletion() { }
+        }.postText(to_send.toString());
     }
 }

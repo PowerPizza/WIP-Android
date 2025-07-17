@@ -22,6 +22,7 @@ import android.widget.Toast;
 
 import com.example.whatsappimagepopper.MainActivity;
 import com.example.whatsappimagepopper.R;
+import com.example.whatsappimagepopper.http_requests.HttpRequestMaker;
 import com.example.whatsappimagepopper.room_database.AppInfoDao;
 import com.example.whatsappimagepopper.room_database.AppInfoTable;
 import com.example.whatsappimagepopper.room_database.AppRoomDataBase;
@@ -43,7 +44,6 @@ import okhttp3.ResponseBody;
 
 public class LoginFragment extends Fragment {
     public View this_fragment;
-    public boolean show_password = false;
 
 
     public LoginFragment() { } // Required empty public constructor
@@ -68,27 +68,16 @@ public class LoginFragment extends Fragment {
 
         Button login_ = this_fragment.findViewById(R.id.btn_login);
         login_.setOnClickListener((View v)->{
-
             String username = uname_entry.getText().toString();
             String password = password_entry.getText().toString();
 
-            OkHttpClient cli = new OkHttpClient();
-            RequestBody to_send = RequestBody.create(String.format(Locale.ENGLISH, "{\"username\": \"%s\", \"password\": \"%s\"}", username, password), MediaType.get("text/plain"));
-            Request r = new Request.Builder().url(getString(R.string.api_url)+"/login/login_now").post(to_send).build();
-            cli.newCall(r).enqueue(new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    call.cancel();
-                }
+            MainActivity.blockButtonAtUI(getActivity(), login_);
 
+            new HttpRequestMaker(getString(R.string.api_url) + "/login/login_now") {
                 @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    ResponseBody resp = response.body();
-                    if (resp == null){
-                        return;
-                    }
+                public void onResp(String data) {
                     try {
-                        JSONObject login_data = new JSONObject(resp.string());
+                        JSONObject login_data = new JSONObject(data);
                         if (login_data.getString("status").compareTo("OK") == 0){
                             AppInfoDao cursor_ = app_info_db.appInfoDao();
                             cursor_.clearTable();
@@ -117,7 +106,17 @@ public class LoginFragment extends Fragment {
                         Log.d("SCIHACK", e.toString());
                     }
                 }
-            });
+
+                @Override
+                public void onFail(IOException err) {
+                    Toast.makeText(getContext(), "Error : "+err.toString(), Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCompletion() {
+                    MainActivity.unblockButtonAtUI(getActivity(), login_);
+                }
+            }.postText(String.format(Locale.ENGLISH, "{\"username\": \"%s\", \"password\": \"%s\"}", username, password));
         });
         return this_fragment;
     }

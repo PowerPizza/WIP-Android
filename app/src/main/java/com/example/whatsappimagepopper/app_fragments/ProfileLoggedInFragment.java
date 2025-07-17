@@ -13,9 +13,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.example.whatsappimagepopper.MainActivity;
 import com.example.whatsappimagepopper.R;
+import com.example.whatsappimagepopper.http_requests.HttpRequestMaker;
 import com.example.whatsappimagepopper.room_database.AppInfoDao;
 import com.example.whatsappimagepopper.room_database.AppInfoTable;
 import com.example.whatsappimagepopper.room_database.AppRoomDataBase;
@@ -116,24 +118,11 @@ public class ProfileLoggedInFragment extends Fragment {
                 Log.d("SCIHACK", e.toString());
             }
 
-            blockButtonAtUI(save_);
-            OkHttpClient cli = new OkHttpClient();
-            RequestBody to_send = RequestBody.create(info_to_send.toString(), MediaType.get("text/plain"));
-            Request req = new Request.Builder().url(getString(R.string.api_url) +  "/update_acc").post(to_send).build();
-            cli.newCall(req).enqueue(new Callback() {
+            MainActivity.blockButtonAtUI(getActivity(), save_);
+            new HttpRequestMaker(getString(R.string.api_url) +  "/update_acc") {
                 @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    call.cancel();
-                }
-
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    ResponseBody rb = response.body();
-                    if (rb == null){
-                        return;
-                    }
-                    String resp = rb.string();
-                    if (resp.compareTo("OK") == 0){
+                public void onResp(String data) {
+                    if (data.compareTo("OK") == 0){
                         app_info_cursor_.clearTable();
                         AppInfoTable new_data = new AppInfoTable();
                         try {
@@ -151,61 +140,48 @@ public class ProfileLoggedInFragment extends Fragment {
                             plif_ep_layout.setEnabled(false);
                         });
                     }
-                    unblockButtonAtUI(save_);
+                    MainActivity.unblockButtonAtUI(getActivity(), save_);
                 }
-            });
+
+                @Override
+                public void onFail(IOException err) {
+                    Toast.makeText(getContext(), "Error : "+err.toString(), Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCompletion() { }
+            }.postText(info_to_send.toString());
         });
 
         Button delete_ = this_fragment.findViewById(R.id.plif_delete_btn);
         delete_.setOnClickListener((View v)->{
             Thread td = new Thread(()->{
-                blockButtonAtUI(delete_);
+                MainActivity.blockButtonAtUI(getActivity(), delete_);
                 AppInfoTable data_ = app_info_cursor_.selectFirstRow().get(0);
-                OkHttpClient cli = new OkHttpClient();
-                RequestBody to_send = RequestBody.create(String.format(Locale.ENGLISH, "{\"username\": \"%s\", \"password\": \"%s\"}", data_.user_name, data_.password), MediaType.get("text/plain"));
-                Request req = new Request.Builder().url(getString(R.string.api_url)+"/delete_acc").post(to_send).build();
-                cli.newCall(req).enqueue(new Callback() {
+                new HttpRequestMaker(getString(R.string.api_url)+"/delete_acc") {
                     @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        Log.d("SCIHACK", "FAILED!");
-                        call.cancel();
-                    }
-
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                        unblockButtonAtUI(delete_);
-                        ResponseBody resp_body = response.body();
-                        if (resp_body == null){
-                            Log.d("SCIHACK", "NO RESPONSE");
-                            return;
-                        }
-                        String resp_ = resp_body.string();
-                        if (resp_.compareTo("OK") == 0){
+                    public void onResp(String data) {
+                        if (data.compareTo("OK") == 0){
                             getActivity().runOnUiThread(()->{
                                 ((MainActivity) getActivity()).logout();
                             });
                         }
                     }
-                });
+
+                    @Override
+                    public void onFail(IOException err) {
+                        Toast.makeText(getContext(), "Error : "+err.toString(), Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onCompletion() {
+                        MainActivity.unblockButtonAtUI(getActivity(), delete_);
+                    }
+                }.postText(String.format(Locale.ENGLISH, "{\"username\": \"%s\", \"password\": \"%s\"}", data_.user_name, data_.password));
             });
             td.start();
         });
 
         return this_fragment;
     }
-
-    public void blockButtonAtUI(Button b){
-        getActivity().runOnUiThread(()->{
-            b.setTag(b.getText());
-            b.setText(getString(R.string.pls_wait));
-            b.setEnabled(false);
-        });
-    }
-    public void unblockButtonAtUI(Button b){
-        getActivity().runOnUiThread(()->{
-            b.setText(b.getTag().toString());
-            b.setEnabled(true);
-        });
-    }
-
 }

@@ -1,14 +1,15 @@
 package com.example.whatsappimagepopper;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -22,6 +23,7 @@ import com.example.whatsappimagepopper.app_fragments.DashboardFragment;
 import com.example.whatsappimagepopper.app_fragments.HomePage;
 import com.example.whatsappimagepopper.app_fragments.ProfileFragment;
 import com.example.whatsappimagepopper.app_fragments.ProfileLoggedInFragment;
+import com.example.whatsappimagepopper.http_requests.HttpRequestMaker;
 import com.example.whatsappimagepopper.room_database.AppInfoDao;
 import com.example.whatsappimagepopper.room_database.AppInfoTable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -31,15 +33,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.example.whatsappimagepopper.room_database.AppRoomDataBase;
 
@@ -52,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         this.app_info_db = AppRoomDataBase.getInstance(getApplicationContext());
 
-        EdgeToEdge.enable(this);  // creates problem of bottom padding with bottom nav bar.
+        EdgeToEdge.enable(this);
 
         setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -73,27 +67,33 @@ public class MainActivity extends AppCompatActivity {
         Fragment home_fragment = new HomePage();
         this.setAppFragment(home_fragment);
 
+        AtomicInteger last_item_id = new AtomicInteger(-1);
         bottom_nav_bar.setOnItemSelectedListener(item -> {
+            if (last_item_id.get() == item.getItemId()){
+                return true;
+            }
+
             if (item.getItemId() == R.id.navigation_home){
                 this.curNavigation = item.getItemId();
                 this.setAppFragment(home_fragment);
             }
             else if (item.getItemId() == R.id.navigation_profile){
                 this.curNavigation = item.getItemId();
-                this.setAppFragment((Fragment) new ProfileFragment());
+                this.setAppFragment(new ProfileFragment());
             }
             else if (item.getItemId() == R.id.navigation_logged_in_profile){
                 this.curNavigation = item.getItemId();
-                this.setAppFragment((Fragment) new ProfileLoggedInFragment());
+                this.setAppFragment(new ProfileLoggedInFragment());
             }
             else if (item.getItemId() == R.id.navigation_add_img){
                 this.curNavigation = item.getItemId();
-                this.setAppFragment((Fragment) new AddImageFragment());
+                this.setAppFragment(new AddImageFragment());
             }
             else if (item.getItemId() == R.id.navigation_dashboard) {
                 this.curNavigation = item.getItemId();
-                this.setAppFragment((Fragment) new DashboardFragment());
+                this.setAppFragment(new DashboardFragment());
             }
+            last_item_id.set(item.getItemId());
 
             return true;
         });
@@ -110,28 +110,14 @@ public class MainActivity extends AppCompatActivity {
                 if (user_info_.isEmpty()) return;
 
                 AppInfoTable user_info = user_info_.get(0);
-                OkHttpClient cli = new OkHttpClient();
-                RequestBody resp = RequestBody.create(String.format(Locale.ENGLISH, "{\"username\": \"%s\", \"password\": \"%s\"}", user_info.user_name, user_info.password), MediaType.get("text/plain"));
-                Request r = new Request.Builder().url(getString(R.string.api_url) + "/login/login_now").post(resp).build();
-                cli.newCall(r).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        Log.d("SH_ERROR", e.toString());
-                        call.cancel();
-                    }
 
+                new HttpRequestMaker(getString(R.string.api_url) + "/login/login_now") {
                     @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) {
-                        ResponseBody resp = response.body();
-                        if (resp == null) {
-                            Log.d("SH_WARN", "While login check server responded null.");
-                            return;
-                        }
+                    public void onResp(String data) {
                         try {
-                            JSONObject resp_ = new JSONObject(resp.string());
+                            JSONObject resp_ = new JSONObject(data);
                             if (resp_.getString("status").compareTo("OK") == 0) {
-                                bottom_nav_bar.getMenu().clear();
-                                bottom_nav_bar.inflateMenu(R.menu.with_login_navbar);
+                                changeBottomNavMenu(R.menu.with_login_navbar);
                             } else {
                                 app_info_cursor.clearTable();
                             }
@@ -139,7 +125,15 @@ public class MainActivity extends AppCompatActivity {
                             Log.d("SH_ERROR", e.toString());
                         }
                     }
-                });
+
+                    @Override
+                    public void onFail(IOException err) {
+                        Log.d("SH_ERROR", err.toString());
+                    }
+
+                    @Override
+                    public void onCompletion() { }
+                }.postText(String.format(Locale.ENGLISH, "{\"username\": \"%s\", \"password\": \"%s\"}", user_info.user_name, user_info.password));
             })
         );
     }
@@ -174,6 +168,20 @@ public class MainActivity extends AppCompatActivity {
         catch (Exception ignored){ }
         this.changeBottomNavMenu(R.menu.without_login_navbar);
         this.setAppFragment(new HomePage());
+    }
+
+    public static void blockButtonAtUI(Activity activity, Button b){
+        activity.runOnUiThread(()->{
+            b.setTag(b.getText());
+            b.setText(activity.getString(R.string.pls_wait));
+            b.setEnabled(false);
+        });
+    }
+    public static void unblockButtonAtUI(Activity activity, Button b){
+        activity.runOnUiThread(()->{
+            b.setText(b.getTag().toString());
+            b.setEnabled(true);
+        });
     }
 
     public static void createMsgBox(View fragment_, String msg, String msg_type){

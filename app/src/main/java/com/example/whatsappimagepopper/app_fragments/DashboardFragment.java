@@ -20,9 +20,11 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.whatsappimagepopper.R;
+import com.example.whatsappimagepopper.http_requests.HttpRequestMaker;
 import com.example.whatsappimagepopper.room_database.AppInfoDao;
 import com.example.whatsappimagepopper.room_database.AppInfoTable;
 import com.example.whatsappimagepopper.room_database.AppRoomDataBase;
@@ -97,30 +99,23 @@ class UserPostField extends LinearLayout {
             Log.d("SCIHACK", e.toString());
         }
 
-        OkHttpClient cli = new OkHttpClient();
-        RequestBody to_req = RequestBody.create(to_send.toString(), MediaType.get("text/plain"));
-        Request req = new Request.Builder().url(this.context.getString(R.string.api_url) + "/api/delete_post").post(to_req).build();
-        cli.newCall(req).enqueue(new Callback() {
+        new HttpRequestMaker(this.context.getString(R.string.api_url) + "/api/delete_post") {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                call.cancel();
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                ResponseBody rb = response.body();
-                if (rb == null){
-                    return;
-                }
-                String data_ = rb.string();
-                if (data_.compareTo("OK") == 0){
+            public void onResp(String data) {
+                if (data.compareTo("OK") == 0){
                     no_of_posts -= 1;
-                    Log.d("SCIHACK", "SUCCESS");
                 }
                 delete_callback.run();
             }
-        });
 
+            @Override
+            public void onFail(IOException err) {
+                Toast.makeText(context, "Error : "+err.toString(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCompletion() { }
+        }.postText(to_send.toString());
     }
 }
 
@@ -155,29 +150,15 @@ public class DashboardFragment extends Fragment {
         }
 
         this.toggleLoadingCircle(true);
-        OkHttpClient cli = new OkHttpClient();
-        RequestBody to_req = RequestBody.create(to_send.toString(), MediaType.get("text/plain"));
-        Request req = new Request.Builder().url(getString(R.string.api_url)+"/api/img_links_by_creds").post(to_req).build();
-        cli.newCall(req).enqueue(new Callback() {
+        new HttpRequestMaker(getString(R.string.api_url)+"/api/img_links_by_creds") {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                call.cancel();
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                ResponseBody rb = response.body();
-                if (rb == null){
-                    Log.d("SCIHACK", "empty");
-                    return;
-                }
+            public void onResp(String data) {
                 try {
-                    toggleLoadingCircle(false);
                     UserPostField.no_of_posts = 0;
                     getActivity().runOnUiThread(()->{
                         clearUserPostHolder();
                     });
-                    JSONObject data_ = new JSONObject(rb.string());
+                    JSONObject data_ = new JSONObject(data);
                     Iterator<String> image_names = data_.keys();
                     if (!image_names.hasNext()){
                         toggleNoPostText(true);
@@ -192,12 +173,21 @@ public class DashboardFragment extends Fragment {
                         });
                     }
                     toggleNoPostText(false);
+                    toggleLoadingCircle(false);
                 }
                 catch (Exception e){
                     Log.d("SCIHACK", e.toString());
                 }
             }
-        });
+
+            @Override
+            public void onFail(IOException err) {
+                Toast.makeText(getContext(), "Error : "+err.toString(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCompletion() { }
+        }.postText(to_send.toString());
     }
 
     public void addUserPostEle(String img_name, String img_url){
